@@ -108,18 +108,18 @@ class CrestronSMWReport:
                         inputnumber = int(symbol.data[inputname])
                         match = next((l for l in self.signals if l.id == inputnumber), None)
                         if match:
-                            print(inputname, "=", match.name)
+                            print(inputname + "=" + match.name)
                 for i in range(1, maxoutputs + 1):
                     outputname = 'O' + str(i)
                     if outputname in symbol.data:
                         outputnumber = int(symbol.data[outputname])
                         match = next((l for l in self.signals if l.id == outputnumber), None)
                         if match:
-                            print(outputname, "=", match.name)
+                            print(outputname + "=" + match.name)
                 for i in range(1, maxparams + 1):
                     parametername = 'P' + str(i)
                     if parametername in symbol.data:
-                        print(parametername, "='" + symbol.data[parametername] + "'")
+                        print(parametername + "='" + symbol.data[parametername] + "'")
         if not symbolfound:
             print ("Symbol name", self.findsymbolname, "was not found. Please check name and try again.")
         
