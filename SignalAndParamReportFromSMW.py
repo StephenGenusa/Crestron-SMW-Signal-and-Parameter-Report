@@ -27,17 +27,19 @@ class Symbol:
     def __init__(self, symbolStr):
         self.name = symbolStr.get('Nm')
         self.data = symbolStr
-        
+
 
 class CrestronSMWReport:
-    
-    
-    def __init__(self, inputfilename, outputfilename, findsymbolname, listsymbols):
+
+
+    def __init__(self, inputfilename, outputfilename, findsymbolname, symbolcomment, listsymbols, listsymbolsasargs):
         self.SMWFilename = inputfilename
         self.outputfilename = outputfilename
         self.findsymbolname = findsymbolname
+        self.symbolcomment = symbolcomment
         self.listsymbols = listsymbols
-    
+        self.listsymbolsasargs = listsymbolsasargs
+
 
     def parseSMW(self):
         with open(self.SMWFilename, 'r') as textfile:
@@ -56,7 +58,7 @@ class CrestronSMWReport:
                     obj2 = o.split('=')
                     obj[obj2[0]] = obj2[1]
             progdata.append(obj)      
-            
+
         # Split out by Object Type
         self.symbols = []
         self.signals = []
@@ -70,71 +72,89 @@ class CrestronSMWReport:
             if item['ObjTp'] == 'Sg':
                 s = Signal(item)
                 self.signals.append(s)
+        if self.listsymbolsasargs:
+            print ("Symbol names found as commandline args:")
+            for symbol in self.symbols:
+                if "Cmn1" in symbol.data:
+                    symbolcomment = symbol.data['Cmn1'].replace("\\", "")
+                else:
+                    symbolcomment = ""
+                print("-sc \"" + symbolcomment + "\" -sn \"" + symbol.name + "\"")
+            sys.exit()
+            
         if self.listsymbols:
             print ("Symbol names found:")
             for symbol in self.symbols:
-                print(symbol.name)
+                if "Cmn1" in symbol.data:
+                    symbolcomment = symbol.data['Cmn1'].replace("\\", "") + " : "
+                else:
+                    symbolcomment = '"" : '
+                print(symbolcomment + symbol.name)
             sys.exit()
         #for signal in self.signals:
         #    pprint([signal.id, signal.name])
-            
+
     def showReport(self):
         self.parseSMW()
         print()
         symbolfound = False
         for symbol in self.symbols:
             if symbol.name == self.findsymbolname:
-                symbolfound = True
-                print ("Symbol", self.findsymbolname, "found")
-                if 'mI' in symbol.data:
-                    maxinputs = int(symbol.data['mI'])
-                else:
-                    maxinputs = 0
-                if 'mO' in symbol.data:
-                    maxoutputs = int(symbol.data['mO'])
-                else:
-                    maxoutputs = 0
-                if 'mP' in symbol.data:
-                    maxparams = int(symbol.data['mP'])
-                else:
-                    maxparams = 0
-                print ("Max Inputs", maxinputs)
-                print ("Max Outputs", maxoutputs)
-                print ("Max Parameters", maxparams)
-                print ("=" * 50)
-                for i in range(1, maxinputs + 1):
-                    inputname = 'I' + str(i)
-                    if inputname in symbol.data:
-                        inputnumber = int(symbol.data[inputname])
-                        match = next((l for l in self.signals if l.id == inputnumber), None)
-                        if match:
-                            print(inputname + "=" + match.name)
-                for i in range(1, maxoutputs + 1):
-                    outputname = 'O' + str(i)
-                    if outputname in symbol.data:
-                        outputnumber = int(symbol.data[outputname])
-                        match = next((l for l in self.signals if l.id == outputnumber), None)
-                        if match:
-                            print(outputname + "=" + match.name)
-                for i in range(1, maxparams + 1):
-                    parametername = 'P' + str(i)
-                    if parametername in symbol.data:
-                        print(parametername + "='" + symbol.data[parametername] + "'")
+                if 'Cmn1' in symbol.data and symbol.data['Cmn1'].replace("\\", "") == self.symbolcomment or \
+                'Cmn1' not in symbol.data and self.symbolcomment == "":
+                    symbolfound = True
+                    print (self.symbolcomment, ": Symbol", self.findsymbolname, "found")
+                    if 'mI' in symbol.data:
+                        maxinputs = int(symbol.data['mI'])
+                    else:
+                        maxinputs = 0
+                    if 'mO' in symbol.data:
+                        maxoutputs = int(symbol.data['mO'])
+                    else:
+                        maxoutputs = 0
+                    if 'mP' in symbol.data:
+                        maxparams = int(symbol.data['mP'])
+                    else:
+                        maxparams = 0
+                    print ("Max Inputs", maxinputs)
+                    print ("Max Outputs", maxoutputs)
+                    print ("Max Parameters", maxparams)
+                    print ("=" * 50)
+                    for i in range(1, maxinputs + 1):
+                        inputname = 'I' + str(i)
+                        if inputname in symbol.data:
+                            inputnumber = int(symbol.data[inputname])
+                            match = next((l for l in self.signals if l.id == inputnumber), None)
+                            if match:
+                                print(inputname + "=" + match.name)
+                    for i in range(1, maxoutputs + 1):
+                        outputname = 'O' + str(i)
+                        if outputname in symbol.data:
+                            outputnumber = int(symbol.data[outputname])
+                            match = next((l for l in self.signals if l.id == outputnumber), None)
+                            if match:
+                                print(outputname + "=" + match.name)
+                    for i in range(1, maxparams + 1):
+                        parametername = 'P' + str(i)
+                        if parametername in symbol.data:
+                            print(parametername + "='" + symbol.data[parametername] + "'")
         if not symbolfound:
-            print ("Symbol name", self.findsymbolname, "was not found. Please check name and try again.")
-        
-        
+            print ("Symbol name", self.findsymbolname, "was not found. Please check name and commend and try again.")
+
+
 def main():
     # Parse commandline arguments
     parser = argparse.ArgumentParser(description='Report Signals on Symbol from SMW by Stephen Genusa - v0.70')
     parser.add_argument("-i", "--input", dest="inputfilename", default = "", help="Input filename", required=True)
     parser.add_argument("-l", "--list", dest="listsymbols", default = False, help="List symbol names", required=False, action='store_true')
-    parser.add_argument("-s", "--symbol", dest="findsymbolname", default = "", help="Symbol name to report", required=False)   
+    parser.add_argument("-la", "--listasargs", dest="listsymbolsasargs", default = False, help="List as commandline args", required=False, action='store_true')
+    parser.add_argument("-sn", "--symbolname", dest="findsymbolname", default = "", help="Symbol name to report", required=False)   
+    parser.add_argument("-sc", "--symbolcommand", dest="symbolcomment", default = "", help="Identify Symbol by comment", required=False)   
     parser.add_argument("-o", "--output", dest="outputfilename", default = "", help="Output file. Currently this parameter ignored.", required=False)
     args = parser.parse_args()
-    
+
     # Parse SMW and display signal report for symbol
-    reporter = CrestronSMWReport(args.inputfilename, args.outputfilename, args.findsymbolname, args.listsymbols)
+    reporter = CrestronSMWReport(args.inputfilename, args.outputfilename, args.findsymbolname, args.symbolcomment, args.listsymbols, args.listsymbolsasargs)
     reporter.showReport()
 
 if __name__ == "__main__":
