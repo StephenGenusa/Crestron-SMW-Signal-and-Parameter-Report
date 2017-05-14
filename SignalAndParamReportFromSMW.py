@@ -76,7 +76,7 @@ class CrestronSMWReport:
             print ("Symbol names found as commandline args:")
             for symbol in self.symbols:
                 if "Cmn1" in symbol.data:
-                    symbolcomment = symbol.data['Cmn1'].replace("\\", "")
+                    symbolcomment = symbol.data['Cmn1'].split("\\")[0]
                 else:
                     symbolcomment = ""
                 print("-sc \"" + symbolcomment + "\" -sn \"" + symbol.name + "\"")
@@ -86,7 +86,7 @@ class CrestronSMWReport:
             print ("Symbol names found:")
             for symbol in self.symbols:
                 if "Cmn1" in symbol.data:
-                    symbolcomment = symbol.data['Cmn1'].replace("\\", "") + " : "
+                    symbolcomment = symbol.data['Cmn1'].split("\\")[0] + " : "
                 else:
                     symbolcomment = '"" : '
                 print(symbolcomment + symbol.name)
@@ -100,7 +100,7 @@ class CrestronSMWReport:
         symbolfound = False
         for symbol in self.symbols:
             if symbol.name == self.findsymbolname:
-                if 'Cmn1' in symbol.data and symbol.data['Cmn1'].replace("\\", "") == self.symbolcomment or \
+                if 'Cmn1' in symbol.data and symbol.data['Cmn1'].split("\\")[0] == self.symbolcomment or \
                 'Cmn1' not in symbol.data and self.symbolcomment == "":
                     symbolfound = True
                     print (self.symbolcomment, ": Symbol", self.findsymbolname, "found")

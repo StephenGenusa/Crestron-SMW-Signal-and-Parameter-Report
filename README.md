@@ -19,7 +19,7 @@ You end up with output showing you the symbol name, all connected input signal n
 - I2=[TP01]_SourceSelect_Satellite
 - I3=[TP01]_SourceSelect_SecurityCam1_IL
 - I4=[TP01]_SourceSelect_SecurityCam2_IL
-- O1=[VideoSource]_Selected
+- O1=[VideoSource]_Select
 - P1='1d'
 - P2='2d'
 - P3='3d'
